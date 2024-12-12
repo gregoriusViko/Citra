@@ -1,14 +1,16 @@
 from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
 OUTPUT_PATH = Path(__file__).parent
-ASSETS_PATH = OUTPUT_PATH / Path(r"D:\KULIAH SANATA DHARMA\SEMESTER 5\PEMROSESAN CITRA\UAS\Citra\assets")
-from tkinter import filedialog
+ASSETS_PATH = Path(__file__).parent/'assets'
+from tkinter import filedialog, Label, Toplevel
 import tkinter as tk
 from PIL import Image, ImageTk
 window = Tk()
 
 window.geometry("950x750")
 window.configure(bg = "#FFFFFF")
+window.title("Preprocessing dan klasifikasi Citra dengan CNN")
+window.resizable(False, False)
 
 
 def LOGIN():
@@ -91,14 +93,34 @@ def Page2():
 
         # Menampilkan path file yang dipilih
         if file_path:
+            global img_original
             print("File yang dipilih:", file_path)
-            img = Image.open(file_path)
-            img_tk = ImageTk.PhotoImage(img)
-            canvasAsli.create_image(300,300,image=img_tk)
-            canvasAsli.img_tk = img_tk
+            img_original = Image.open(file_path)
+            img_resized = img_original.resize((400,400), Image.LANCZOS)
+            photoAsli = ImageTk.PhotoImage(img_resized)
+            
+            gbrAsli_label.config(image=photoAsli)
+            gbrAsli_label.image= photoAsli
+            gbrAsli_label.bind("<Button-1>", lambda e: show_original_image())
+
         else:
             print("Tidak ada file yang dipilih.")
     
+    def show_original_image():
+        # Membuat jendela baru untuk menampilkan gambar asli
+        top = Toplevel()
+        top.title("Citra Ukuran Asli")
+        global img_original
+        photo = ImageTk.PhotoImage(img_original)
+        
+        # Menampilkan gambar asli di jendela baru
+        img_label = tk.Label(top, image=photo)
+        img_label.image = photo  # Referensi agar gambar tidak terhapus oleh garbage collector
+        img_label.pack()
+        
+    def Process():
+        lambda: print("button_2 clicked")
+
     canvas = Canvas(
     window,
     bg = "#FFFFFF",
@@ -108,7 +130,7 @@ def Page2():
     highlightthickness = 0,
     relief = "ridge"
     )
-
+    # BACKGROUND WINDOW
     canvas.place(x = 0, y = 0)
     canvas.create_rectangle(
         0.0,
@@ -118,62 +140,14 @@ def Page2():
         fill="#3B79D8",
         outline="")
 
-    canvas.create_rectangle(
-        65.0,
-        86.0,
-        215.0,
-        236.0,
-        fill="#F1F5FF",
-        outline="")
-
-    canvas.create_rectangle(
-        65.0,
-        312.0,
-        215.0,
-        462.0,
-        fill="#F1F5FF",
-        outline="")
-
-    canvas.create_rectangle(
-        259.0,
-        312.0,
-        409.0,
-        462.0,
-        fill="#F1F5FF",
-        outline="")
-
-    canvas.create_rectangle(
-        453.0,
-        312.0,
-        603.0,
-        462.0,
-        fill="#F1F5FF",
-        outline="")
-
-    canvas.create_rectangle(
-        65.0,
-        543.0,
-        215.0,
-        693.0,
-        fill="#F1F5FF",
-        outline="")
-
-    canvas.create_rectangle(
-        259.0,
-        543.0,
-        409.0,
-        693.0,
-        fill="#F1F5FF",
-        outline="")
-
-    canvas.create_rectangle(
-        453.0,
-        543.0,
-        603.0,
-        693.0,
-        fill="#F1F5FF",
-        outline="")
-
+    # canvas.create_rectangle(
+    #     65.0,
+    #     86.0,
+    #     215.0,
+    #     236.0,
+    #     fill="#F1F5FF",
+    #     outline="")
+    
     canvas.create_text(
         69.0,
         57.0,
@@ -182,7 +156,12 @@ def Page2():
         fill="#FFFFFF",
         font=("Inter Bold", 24 * -1)
     )
-
+    
+    gbrAsli_label = Label(window, text="Klik untuk melihat \n gambar ukuran asli")
+    gbrAsli_label.pack(pady=10)
+    gbrAsli_label.place(x=65, y=86, width=150, height=150)
+    
+    # image clipping
     canvas.create_text(
         69.0,
         293.0,
@@ -191,7 +170,18 @@ def Page2():
         fill="#FFFFFF",
         font=("Inter Bold", 16 * -1)
     )
-
+    # canvas.create_rectangle(
+    #     65.0,
+    #     312.0,
+    #     215.0,
+    #     462.0,
+    #     fill="#F1F5FF",
+    #     outline="")
+    clipping_label = Label(window, text="Klik untuk melihat \n hasil image Clipping")
+    clipping_label.pack(pady=10)
+    clipping_label.place(x=65, y=312, width=150, height=150)
+    
+    # Image greyscale
     canvas.create_text(
         282.0,
         293.0,
@@ -201,6 +191,18 @@ def Page2():
         font=("Inter Bold", 16 * -1)
     )
 
+    # canvas.create_rectangle(
+    #     259.0,
+    #     312.0,
+    #     409.0,
+    #     462.0,
+    #     fill="#F1F5FF",
+    #     outline="",)
+    grey_label = Label(window, text="Klik untuk melihat \n hasil greyscale")
+    grey_label.pack(pady=10)
+    grey_label.place(x=259, y=312, width=150, height=150)
+    
+    # Image smoothing
     canvas.create_text(
         447.0,
         293.0,
@@ -210,15 +212,18 @@ def Page2():
         font=("Inter Bold", 16 * -1)
     )
 
-    canvas.create_text(
-        262.0,
-        524.0,
-        anchor="nw",
-        text="Edge Detection",
-        fill="#FFFFFF",
-        font=("Inter Bold", 16 * -1)
-    )
-
+    # canvas.create_rectangle(
+    #     453.0,
+    #     312.0,
+    #     603.0,
+    #     462.0,
+    #     fill="#F1F5FF",
+    #     outline="")
+    smoothing_label = Label(window, text="Klik untuk melihat \n hasil smoothing")
+    smoothing_label.pack(pady=10)
+    smoothing_label.place(x=453, y=312, width=150, height=150)
+    
+    # Threshold Segmentation
     canvas.create_text(
         31.0,
         524.0,
@@ -228,6 +233,39 @@ def Page2():
         font=("Inter Bold", 16 * -1)
     )
 
+    # canvas.create_rectangle(
+    #     65.0,
+    #     543.0,
+    #     215.0,
+    #     693.0,
+    #     fill="#F1F5FF",
+    #     outline="")
+    threshold_label = Label(window, text="Klik untuk melihat \n hasil threshold segmentatiton")
+    threshold_label.pack(pady=10)
+    threshold_label.place(x=65, y=543, width=150, height=150)
+    
+    
+    # Edge Detection
+    canvas.create_text(
+        262.0,
+        524.0,
+        anchor="nw",
+        text="Edge Detection",
+        fill="#FFFFFF",
+        font=("Inter Bold", 16 * -1)
+    )
+    # canvas.create_rectangle(
+    #     259.0,
+    #     543.0,
+    #     409.0,
+    #     693.0,
+    #     fill="#F1F5FF",
+    #     outline="")
+    edgeDetec_label = Label(window, text="Klik untuk melihat \n hasil edge detection")
+    edgeDetec_label.pack(pady=10)
+    edgeDetec_label.place(x=259, y=543, width=150, height=150)
+    
+    # Hasil preprocessing
     canvas.create_text(
         437.0,
         524.0,
@@ -237,6 +275,19 @@ def Page2():
         font=("Inter Bold", 16 * -1)
     )
 
+    # canvas.create_rectangle(
+    #     453.0,
+    #     543.0,
+    #     603.0,
+    #     693.0,
+    #     fill="#F1F5FF",
+    #     outline="")
+    hasilPreproc_label = Label(window, text="Klik untuk melihat \n hasil citra preprocessing")
+    hasilPreproc_label.pack(pady=10)
+    hasilPreproc_label.place(x=453, y=543, width=150, height=150)
+    
+
+    # Pembatas
     canvas.create_rectangle(
         646.0,
         0.0,
@@ -244,6 +295,7 @@ def Page2():
         750.0,
         fill="#D9D9D9",
         outline="")
+    
     # BUTTON UPLOAD
     button_image_1 = PhotoImage(
         file=relative_to_assets("button_1.png"))
@@ -261,6 +313,7 @@ def Page2():
         width=129.0,
         height=39.0
     )
+    
     # BUTTON PROCESS
     button_image_2 = PhotoImage(
         file=relative_to_assets("button_2.png"))
@@ -268,7 +321,7 @@ def Page2():
         image=button_image_2,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_2 clicked"),
+        command=Process,
         relief="flat"
     )
     button_2.place(
@@ -277,6 +330,7 @@ def Page2():
         width=129.0,
         height=39.0
     )
+    
     # BUTTON KELUAR
     button_image_3 = PhotoImage(
         file=relative_to_assets("button_3.png"))
@@ -284,7 +338,7 @@ def Page2():
         image=button_image_3,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_3 clicked"),
+        command=LOGIN,
         relief="flat"
     )
     button_3.place(
@@ -303,7 +357,7 @@ def Page2():
         justify="center",
         font=("Inter Bold", 32 * -1)
     )
-
+    # Teks
     canvas.create_rectangle(
         711.0,
         178.0,
