@@ -111,15 +111,115 @@ def Page2():
         top = Toplevel()
         top.title("Citra Ukuran Asli")
         global img_original
-        photo = ImageTk.PhotoImage(img_original)
+        photoAsli = ImageTk.PhotoImage(img_original)
         
         # Menampilkan gambar asli di jendela baru
-        img_label = tk.Label(top, image=photo)
-        img_label.image = photo  # Referensi agar gambar tidak terhapus oleh garbage collector
+        img_label = tk.Label(top, image=photoAsli)
+        img_label.image = photoAsli  # Referensi agar gambar tidak terhapus oleh garbage collector
+        img_label.pack()
+    
+    # function tombol proses
+    def Process():
+        
+        ## kotak grayscale
+        # photoGray = ImageTk.PhotoImage(img_grayscale)
+        # grey_label.config(image=photograyscale)
+        grey_label.config(text="image=photograyscale")
+        # grey_label.image= photoGray
+        grey_label.bind("<Button-2>", lambda e: show_grayscale_image())
+        
+        ## kotak smoothing
+        # photoSmooth = ImageTk.PhotoImage(img_smoothing)
+        # smoothing_label.config(image=photoSmooth)
+        smoothing_label.config(text="image=photoSmooth")
+        # smoothing_label.image= photoSmooth
+        smoothing_label.bind("<Button-3>", lambda e: show_smotthing_image())
+        
+        ## kotak threshold
+        # photoThreshold = ImageTk.PhotoImage(photoThreshold)
+        # threshold_label.config(image=photoThreshold)
+        threshold_label.config(text="image=photoThreshold")
+        # threshold_label.image= photoThreshold
+        threshold_label.bind("<Button-4>", lambda e: show_threshold_image())
+        
+        ## kotak edgeDetect
+        # photoEdge = ImageTk.PhotoImage(photoEdge)
+        # edgeDetec_label.config(image=photoThreshold)
+        edgeDetec_label.config(text="image=photoEdge")
+        # edgeDetec_label.image= photoEdge
+        edgeDetec_label.bind("<Button-5>", lambda e: show_EdgeDetec_image())
+        
+         ## kotak hasil preprocessing
+        # photoFinal = ImageTk.PhotoImage(photoFinal)
+        # edgeDetec_label.config(image=photoFinal)
+        hasilPreproc_label.config(text="image=photoHasil")
+        # edgeDetec_label.image= photoFinal
+        hasilPreproc_label.bind("<Button-6>", lambda e: show_Hasil_image())
+    
+    
+    def show_grayscale_image():
+        # Membuat jendela baru untuk menampilkan gambar asli
+        top = Toplevel()
+        top.title("Hasil Image Grayscale")
+        global photograyscale
+        photoGrayscale = ImageTk.PhotoImage(photograyscale)
+        
+        # Menampilkan gambar asli di jendela baru
+        img_label = tk.Label(top, image=photoGrayscale)
+        img_label.image = photoGrayscale  # Referensi agar gambar tidak terhapus oleh garbage collector
         img_label.pack()
         
-    def Process():
-        lambda: print("button_2 clicked")
+    def show_smotthing_image():
+        # Membuat jendela baru untuk menampilkan gambar asli
+        top = Toplevel()
+        top.title("Hasil Image Smoothing")
+        global photosmoothing
+        photoSmoothing = ImageTk.PhotoImage(photosmoothing)
+        
+        # Menampilkan gambar asli di jendela baru
+        img_label = tk.Label(top, image=photoSmoothing)
+        img_label.image = photoSmoothing  # Referensi agar gambar tidak terhapus oleh garbage collector
+        img_label.pack()
+    
+    def show_threshold_image():
+        # Membuat jendela baru untuk menampilkan gambar asli
+        top = Toplevel()
+        top.title("Hasil Threshold Segmentation")
+        global Threshold
+        photoThreshold = ImageTk.PhotoImage(Threshold)
+        
+        # Menampilkan gambar asli di jendela baru
+        img_label = tk.Label(top, image=photoThreshold)
+        img_label.image = photoThreshold  # Referensi agar gambar tidak terhapus oleh garbage collector
+        img_label.pack()
+        
+    def show_EdgeDetec_image():
+        # Membuat jendela baru untuk menampilkan gambar asli
+        top = Toplevel()
+        top.title("Hasil Edge Detection")
+        global edgedetection
+        photoEdge = ImageTk.PhotoImage(edgedetection)
+        
+        # Menampilkan gambar asli di jendela baru
+        img_label = tk.Label(top, image=photoEdge)
+        img_label.image = photoEdge  # Referensi agar gambar tidak terhapus oleh garbage collector
+        img_label.pack()
+    
+    def show_Hasil_image():
+        # Membuat jendela baru untuk menampilkan gambar asli
+        top = Toplevel()
+        top.title("Hasil Preprocessing")
+        global hasilPreproc
+        photoFinal = ImageTk.PhotoImage(hasilPreproc)
+        
+        # Menampilkan gambar asli di jendela baru
+        img_label = tk.Label(top, image=photoFinal)
+        img_label.image = photoFinal  # Referensi agar gambar tidak terhapus oleh garbage collector
+        img_label.pack()
+        
+    def klasifikasi():
+        
+        pass
 
     canvas = Canvas(
     window,
@@ -140,14 +240,7 @@ def Page2():
         fill="#3B79D8",
         outline="")
 
-    # canvas.create_rectangle(
-    #     65.0,
-    #     86.0,
-    #     215.0,
-    #     236.0,
-    #     fill="#F1F5FF",
-    #     outline="")
-    
+    # citra asli
     canvas.create_text(
         69.0,
         57.0,
@@ -161,29 +254,10 @@ def Page2():
     gbrAsli_label.pack(pady=10)
     gbrAsli_label.place(x=65, y=86, width=150, height=150)
     
-    # image clipping
-    canvas.create_text(
-        69.0,
-        293.0,
-        anchor="nw",
-        text="Image Clipping",
-        fill="#FFFFFF",
-        font=("Inter Bold", 16 * -1)
-    )
-    # canvas.create_rectangle(
-    #     65.0,
-    #     312.0,
-    #     215.0,
-    #     462.0,
-    #     fill="#F1F5FF",
-    #     outline="")
-    clipping_label = Label(window, text="Klik untuk melihat \n hasil image Clipping")
-    clipping_label.pack(pady=10)
-    clipping_label.place(x=65, y=312, width=150, height=150)
     
     # Image greyscale
     canvas.create_text(
-        282.0,
+        180.0,
         293.0,
         anchor="nw",
         text="Grayscale",
@@ -191,55 +265,35 @@ def Page2():
         font=("Inter Bold", 16 * -1)
     )
 
-    # canvas.create_rectangle(
-    #     259.0,
-    #     312.0,
-    #     409.0,
-    #     462.0,
-    #     fill="#F1F5FF",
-    #     outline="",)
     grey_label = Label(window, text="Klik untuk melihat \n hasil greyscale")
     grey_label.pack(pady=10)
-    grey_label.place(x=259, y=312, width=150, height=150)
+    grey_label.place(x=146, y=312, width=150, height=150)
+    
     
     # Image smoothing
     canvas.create_text(
-        447.0,
+        355.0,
         293.0,
         anchor="nw",
         text="Image Smoothing",
         fill="#FFFFFF",
         font=("Inter Bold", 16 * -1)
     )
-
-    # canvas.create_rectangle(
-    #     453.0,
-    #     312.0,
-    #     603.0,
-    #     462.0,
-    #     fill="#F1F5FF",
-    #     outline="")
+    
     smoothing_label = Label(window, text="Klik untuk melihat \n hasil smoothing")
     smoothing_label.pack(pady=10)
-    smoothing_label.place(x=453, y=312, width=150, height=150)
+    smoothing_label.place(x=340, y=312, width=150, height=150)
     
     # Threshold Segmentation
     canvas.create_text(
-        31.0,
+        50.0,
         524.0,
         anchor="nw",
         text="Threshold segmentation",
         fill="#FFFFFF",
         font=("Inter Bold", 16 * -1)
     )
-
-    # canvas.create_rectangle(
-    #     65.0,
-    #     543.0,
-    #     215.0,
-    #     693.0,
-    #     fill="#F1F5FF",
-    #     outline="")
+   
     threshold_label = Label(window, text="Klik untuk melihat \n hasil threshold segmentatiton")
     threshold_label.pack(pady=10)
     threshold_label.place(x=65, y=543, width=150, height=150)
@@ -247,27 +301,21 @@ def Page2():
     
     # Edge Detection
     canvas.create_text(
-        262.0,
+        278.0,
         524.0,
         anchor="nw",
         text="Edge Detection",
         fill="#FFFFFF",
         font=("Inter Bold", 16 * -1)
     )
-    # canvas.create_rectangle(
-    #     259.0,
-    #     543.0,
-    #     409.0,
-    #     693.0,
-    #     fill="#F1F5FF",
-    #     outline="")
+    
     edgeDetec_label = Label(window, text="Klik untuk melihat \n hasil edge detection")
     edgeDetec_label.pack(pady=10)
     edgeDetec_label.place(x=259, y=543, width=150, height=150)
     
     # Hasil preprocessing
     canvas.create_text(
-        437.0,
+        460.0,
         524.0,
         anchor="nw",
         text="Hasil Preprocessing ",
@@ -275,18 +323,22 @@ def Page2():
         font=("Inter Bold", 16 * -1)
     )
 
-    # canvas.create_rectangle(
-    #     453.0,
-    #     543.0,
-    #     603.0,
-    #     693.0,
-    #     fill="#F1F5FF",
-    #     outline="")
     hasilPreproc_label = Label(window, text="Klik untuk melihat \n hasil citra preprocessing")
     hasilPreproc_label.pack(pady=10)
     hasilPreproc_label.place(x=453, y=543, width=150, height=150)
     
 
+    canvas.create_text(
+        69.0,
+        709.0,
+        anchor="nw",
+        text="Keterangan: Tekan gambar pada kotak untuk melihat citra tersebut",
+        fill="#FFFFFF",
+        justify="center",
+        font=("Inter Bold", 14 * -1)
+    )
+    
+    
     # Pembatas
     canvas.create_rectangle(
         646.0,
@@ -331,6 +383,24 @@ def Page2():
         height=39.0
     )
     
+     # BUTTON KELUAR
+    button_image_4 = PhotoImage(
+        file=relative_to_assets("button_4.png"))
+    button_4 = Button(
+        image=button_image_4,
+        borderwidth=0,
+        highlightthickness=0,
+        command=klasifikasi,
+        relief="flat"
+    )
+    button_4.place(
+        x=739.0,
+        y=166.0,
+        width=129.0,
+        height=39.0
+    )
+
+    
     # BUTTON KELUAR
     button_image_3 = PhotoImage(
         file=relative_to_assets("button_3.png"))
@@ -343,7 +413,7 @@ def Page2():
     )
     button_3.place(
         x=743.0,
-        y=472.0,
+        y=654.0,
         width=129.0,
         height=39.0
     )
@@ -360,7 +430,7 @@ def Page2():
     # Teks
     canvas.create_rectangle(
         711.0,
-        178.0,
+        260.0,
         905.0,
         407.0,
         fill="#FFFFFF",
