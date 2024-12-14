@@ -4,6 +4,8 @@ OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = Path(__file__).parent/'assets'
 from tkinter import filedialog, Label, Toplevel
 import tkinter as tk
+import cv2
+import numpy as np
 from PIL import Image, ImageTk
 window = Tk()
 
@@ -81,6 +83,17 @@ def LOGIN():
     window.resizable(False, False)
     window.mainloop()
     
+image_rgb = None
+img_grayscale = None
+hasil_grayscale = None
+file_gbr = None
+img_smoothing = None
+Threshold = None
+hasil_threshold = None
+img_detection2 = None
+img_detection = None
+resized_image = None
+
 def Page2():
     global img_tk
     def relative_to_assets(path: str) -> Path: return ASSETS_PATH / Path("frame1")/Path(path)
@@ -93,11 +106,14 @@ def Page2():
 
         # Menampilkan path file yang dipilih
         if file_path:
-            global img_original
+            global imagenya, file_gbr, image_rgb
             print("File yang dipilih:", file_path)
-            img_original = Image.open(file_path)
-            img_resized = img_original.resize((400,400), Image.LANCZOS)
-            photoAsli = ImageTk.PhotoImage(img_resized)
+            file_gbr = file_path.replace("/", "\\")
+            # img_original = Image.open(file_path).convert("RGB")
+            imagenya = cv2.imread(file_gbr)
+            image_rgb = cv2.cvtColor(imagenya, cv2.COLOR_BGR2RGB)
+            asli_image = Image.fromarray(image_rgb)
+            photoAsli = ImageTk.PhotoImage(asli_image)
             
             gbrAsli_label.config(image=photoAsli)
             gbrAsli_label.image= photoAsli
@@ -110,59 +126,150 @@ def Page2():
         # Membuat jendela baru untuk menampilkan gambar asli
         top = Toplevel()
         top.title("Citra Ukuran Asli")
-        global img_original
-        photoAsli = ImageTk.PhotoImage(img_original)
+        asli_image = Image.fromarray(image_rgb)
+        photoAsli = ImageTk.PhotoImage(asli_image)
         
         # Menampilkan gambar asli di jendela baru
         img_label = tk.Label(top, image=photoAsli)
         img_label.image = photoAsli  # Referensi agar gambar tidak terhapus oleh garbage collector
         img_label.pack()
     
+    def greyscale(image_rgb):
+        gray = []
+        for y in image_rgb:
+            baris = []
+            for x in y:
+                                # R*0 + G*1 + B*0
+                baris.append(int(x[0]*0 + x[1]*1 + x[2]*0))
+            gray.append(baris)
+
+        gray = np.array(gray).astype(np.uint8)
+        return gray
+        
+        
+    def threshold(img_smoothing):
+        data = []
+        temp = 5
+        while len(data) < 10:
+            data = [p for p in img_smoothing[:, 0].flatten() if p <= temp]
+            temp += 5
+
+        # Langkah 2: Perhitungan mean adaptif
+        mean_now = sum(data) / len(data)
+        mean_temp = 0
+
+        while mean_now != mean_temp:
+            t1 = [p for p in data if p < mean_now]
+            t2 = [p for p in data if p >= mean_now]
+            
+            if len(t1) == 0 or len(t2) == 0:
+                mean_now += 1
+                break
+
+            mean_temp = mean_now
+            mean_now = int((sum(t1) / len(t1) + sum(t2) / len(t2)) / 2)
+
+        # Langkah 3: Thresholding untuk menghasilkan gambar biner
+        gambar_baru = []
+        for y in img_smoothing:
+                baris = []
+                for x in y:
+                    if x > 111:
+                        baris.append(255)
+                    else:
+                        baris.append(0)
+                gambar_baru.append(baris)
+
+        # Konversi ke array numpy dengan tipe uint8
+        gambar_baru = np.array(gambar_baru, dtype=np.uint8)
+
+        return gambar_baru
+    
     # function tombol proses
     def Process():
         
         ## kotak grayscale
-        # photoGray = ImageTk.PhotoImage(img_grayscale)
-        # grey_label.config(image=photograyscale)
-        grey_label.config(text="image=photograyscale")
-        # grey_label.image= photoGray
-        grey_label.bind("<Button-2>", lambda e: show_grayscale_image())
+        global img_grayscale, hasil_grayscale, img_smoothing, Threshold ,hasil_threshold, img_detection2, img_detection, resized_image
+        print(file_gbr)
+        if file_gbr is None:
+            print("Gambar asli belum dimuat!")
+            return
+
+        try:
+            # Konversi gambar ke grayscale
+            imagenya = cv2.imread(file_gbr)
+            if imagenya is None:
+                print("Gagal membaca gambar. Periksa path file.")
+            else:
+                print("Gambar berhasil dimuat.")
+                print("Proses...")
+                ###############################################
+                hasil_grayscale = greyscale(image_rgb)
+                # Konversi grayscale ke format PhotoImage
+                grayscale_image = Image.fromarray(hasil_grayscale)
+                photoGray = ImageTk.PhotoImage(grayscale_image)
+
+                # Tampilkan gambar grayscale
+                grey_label.config(image=photoGray)
+                grey_label.image = photoGray  # Simpan referensi gambar
+                grey_label.bind("<Button-1>", lambda e: show_grayscale_image())
+                
+                ################################################
+                
+                ## kotak smoothing
+                img_smoothing = cv2.medianBlur(hasil_grayscale,5)
+                
+                # Konversi smoothing ke format PhotoImage
+                smoothing_image = Image.fromarray(img_smoothing)
+                photoSmooth = ImageTk.PhotoImage(smoothing_image)
+                
+                smoothing_label.config(image=photoSmooth)
+                smoothing_label.image= photoSmooth
+                smoothing_label.bind("<Button-1>", lambda e: show_smotthing_image())
+                
+                ################################################
+                
+                ## kotak threshold 
+                # threshold
+                hasil_threshold = threshold(img_smoothing)
+                threshold_image = Image.fromarray(hasil_threshold)
+                photoThreshold = ImageTk.PhotoImage(threshold_image)
+                threshold_label.config(image=photoThreshold)
+                threshold_label.image= photoThreshold
+                threshold_label.bind("<Button-1>", lambda e: show_threshold_image())
+                
+                ################################################
+                
+                ## kotak edgeDetect
+                img_detection = cv2.Laplacian(hasil_threshold, cv2.CV_64F)
+                img_detection2 = np.uint8(np.absolute(img_detection))
+                detection_image = Image.fromarray(img_detection2)
+                photoEdge = ImageTk.PhotoImage(detection_image)
+                
+                edgeDetec_label.config(image=photoEdge)
+                edgeDetec_label.image= photoEdge
+                edgeDetec_label.bind("<Button-1>", lambda e: show_EdgeDetec_image())
+                
+                ################################################
+                
+                ## kotak hasil preprocessing
+                resized_image = cv2.resize(img_detection2, (256, 256), interpolation=cv2.INTER_LINEAR)
+                hasil_image = Image.fromarray(resized_image)
+                photoFinal = ImageTk.PhotoImage(hasil_image)
+                
+                hasilPreproc_label.config(image=photoFinal)
+                hasilPreproc_label.image= photoFinal
+                hasilPreproc_label.bind("<Button-1>", lambda e: show_Hasil_image())
+        except Exception as e:
+            print(f"Error saat memproses gambar: {e}")
         
-        ## kotak smoothing
-        # photoSmooth = ImageTk.PhotoImage(img_smoothing)
-        # smoothing_label.config(image=photoSmooth)
-        smoothing_label.config(text="image=photoSmooth")
-        # smoothing_label.image= photoSmooth
-        smoothing_label.bind("<Button-3>", lambda e: show_smotthing_image())
         
-        ## kotak threshold
-        # photoThreshold = ImageTk.PhotoImage(photoThreshold)
-        # threshold_label.config(image=photoThreshold)
-        threshold_label.config(text="image=photoThreshold")
-        # threshold_label.image= photoThreshold
-        threshold_label.bind("<Button-4>", lambda e: show_threshold_image())
-        
-        ## kotak edgeDetect
-        # photoEdge = ImageTk.PhotoImage(photoEdge)
-        # edgeDetec_label.config(image=photoThreshold)
-        edgeDetec_label.config(text="image=photoEdge")
-        # edgeDetec_label.image= photoEdge
-        edgeDetec_label.bind("<Button-5>", lambda e: show_EdgeDetec_image())
-        
-         ## kotak hasil preprocessing
-        # photoFinal = ImageTk.PhotoImage(photoFinal)
-        # edgeDetec_label.config(image=photoFinal)
-        hasilPreproc_label.config(text="image=photoHasil")
-        # edgeDetec_label.image= photoFinal
-        hasilPreproc_label.bind("<Button-6>", lambda e: show_Hasil_image())
-    
-    
     def show_grayscale_image():
         # Membuat jendela baru untuk menampilkan gambar asli
         top = Toplevel()
         top.title("Hasil Image Grayscale")
-        global photograyscale
-        photoGrayscale = ImageTk.PhotoImage(photograyscale)
+        grayscale_image = Image.fromarray(hasil_grayscale)
+        photoGrayscale = ImageTk.PhotoImage(grayscale_image)
         
         # Menampilkan gambar asli di jendela baru
         img_label = tk.Label(top, image=photoGrayscale)
@@ -173,8 +280,8 @@ def Page2():
         # Membuat jendela baru untuk menampilkan gambar asli
         top = Toplevel()
         top.title("Hasil Image Smoothing")
-        global photosmoothing
-        photoSmoothing = ImageTk.PhotoImage(photosmoothing)
+        smooth_image = Image.fromarray(img_smoothing)
+        photoSmoothing = ImageTk.PhotoImage(smooth_image)
         
         # Menampilkan gambar asli di jendela baru
         img_label = tk.Label(top, image=photoSmoothing)
@@ -185,8 +292,9 @@ def Page2():
         # Membuat jendela baru untuk menampilkan gambar asli
         top = Toplevel()
         top.title("Hasil Threshold Segmentation")
-        global Threshold
-        photoThreshold = ImageTk.PhotoImage(Threshold)
+        hasil_threshold = threshold(img_smoothing)
+        threshold_image = Image.fromarray(hasil_threshold)
+        photoThreshold = ImageTk.PhotoImage(threshold_image)
         
         # Menampilkan gambar asli di jendela baru
         img_label = tk.Label(top, image=photoThreshold)
@@ -197,8 +305,9 @@ def Page2():
         # Membuat jendela baru untuk menampilkan gambar asli
         top = Toplevel()
         top.title("Hasil Edge Detection")
-        global edgedetection
-        photoEdge = ImageTk.PhotoImage(edgedetection)
+        img_detection2 = np.uint8(np.absolute(img_detection))
+        detection_image = Image.fromarray(img_detection2)
+        photoEdge = ImageTk.PhotoImage(detection_image)
         
         # Menampilkan gambar asli di jendela baru
         img_label = tk.Label(top, image=photoEdge)
@@ -209,8 +318,8 @@ def Page2():
         # Membuat jendela baru untuk menampilkan gambar asli
         top = Toplevel()
         top.title("Hasil Preprocessing")
-        global hasilPreproc
-        photoFinal = ImageTk.PhotoImage(hasilPreproc)
+        hasil_image = Image.fromarray(resized_image)
+        photoFinal = ImageTk.PhotoImage(hasil_image)
         
         # Menampilkan gambar asli di jendela baru
         img_label = tk.Label(top, image=photoFinal)
@@ -383,7 +492,7 @@ def Page2():
         height=39.0
     )
     
-     # BUTTON KELUAR
+     # BUTTON KLASIFIKASI
     button_image_4 = PhotoImage(
         file=relative_to_assets("button_4.png"))
     button_4 = Button(
