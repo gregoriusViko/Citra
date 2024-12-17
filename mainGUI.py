@@ -148,26 +148,26 @@ def Page2():
         
         
     def threshold(img_smoothing):
-        data = []
-        temp = 5
-        while len(data) < 10:
-            data = [p for p in img_smoothing[:, 0].flatten() if p <= temp]
-            temp += 5
+        # data = []
+        # temp = 5
+        # while len(data) < 10:
+        #     data = [p for p in img_smoothing[:, 0].flatten() if p <= temp]
+        #     temp += 5
 
-        # Langkah 2: Perhitungan mean adaptif
-        mean_now = sum(data) / len(data)
-        mean_temp = 0
+        # # Langkah 2: Perhitungan mean adaptif
+        # mean_now = sum(data) / len(data)
+        # mean_temp = 0
 
-        while mean_now != mean_temp:
-            t1 = [p for p in data if p < mean_now]
-            t2 = [p for p in data if p >= mean_now]
+        # while mean_now != mean_temp:
+        #     t1 = [p for p in data if p < mean_now]
+        #     t2 = [p for p in data if p >= mean_now]
             
-            if len(t1) == 0 or len(t2) == 0:
-                mean_now += 1
-                break
+        #     if len(t1) == 0 or len(t2) == 0:
+        #         mean_now += 1
+        #         break
 
-            mean_temp = mean_now
-            mean_now = int((sum(t1) / len(t1) + sum(t2) / len(t2)) / 2)
+        #     mean_temp = mean_now
+        #     mean_now = int((sum(t1) / len(t1) + sum(t2) / len(t2)) / 2)
 
         # Langkah 3: Thresholding untuk menghasilkan gambar biner
         gambar_baru = []
