@@ -8,12 +8,50 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 window = Tk()
+import tensorflow as tf
+from tensorflow.keras.layers import Layer
 
-window.geometry("950x750")
+window.geometry("1100x750")
 window.configure(bg = "#FFFFFF")
 window.title("Preprocessing dan klasifikasi Citra dengan CNN")
 window.resizable(False, False)
+hasil_image =None
 
+predicted_class="processing"
+probability=0.0
+photoAsli = None
+
+@tf.keras.utils.register_keras_serializable()
+class FixedDropout(Layer):
+    def __init__(self, rate=0.0, noise_shape=None, seed=None, **kwargs):
+        super(FixedDropout, self).__init__(**kwargs)
+        self.rate = rate
+        self.noise_shape = noise_shape
+        self.seed = seed
+
+    def call(self, inputs, training=False):
+        if not training or self.rate == 0:
+            return inputs               
+        return tf.nn.dropout(inputs, rate=self.rate, noise_shape=self.noise_shape, seed=self.seed)
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+        'rate': self.rate,
+        'noise_shape': self.noise_shape,
+        'seed': self.seed
+            })
+        return config
+
+@tf.keras.utils.register_keras_serializable()
+def custom_swish(x):
+    return tf.keras.activations.swish(x)
+
+model = tf.keras.models.load_model('rice_model.keras', 
+            custom_objects={
+                'swish': custom_swish,
+                'FixedDropout': FixedDropout
+            })
 
 def LOGIN():
     def relative_to_assets(path: str) -> Path: return ASSETS_PATH / Path("frame0")/Path(path)
@@ -22,7 +60,7 @@ def LOGIN():
     window,
     bg = "#FFFFFF",
     height = 750,
-    width = 950,
+    width = 1100,
     bd = 0,
     highlightthickness = 0,
     relief = "ridge"
@@ -32,13 +70,13 @@ def LOGIN():
     canvas.create_rectangle(
         475.0,
         0.0,
-        950.0,
+        1100.0,
         750.0,
         fill="#3B79D8",
         outline="")
 
     canvas.create_text(
-        495.0,
+        600.0,
         99.0,
         anchor="nw",
         text="Pemrosesan Citra",
@@ -46,8 +84,10 @@ def LOGIN():
         font=("Inter Bold", 50 * -1)
     )
 
+    
+
     canvas.create_text(
-        495.0,
+        600.0,  
         240.0,
         anchor="nw",
         text="Deteksi dan\nKlasifikasi Penyakit\npada Daun Padi\nMenggunakan CNN",
@@ -67,7 +107,7 @@ def LOGIN():
         
     )
     button_1.place(
-        x=630.0,
+        x=720.0,
         y=550.0,
         width=166.0,
         height=56.0
@@ -93,6 +133,7 @@ hasil_threshold = None
 img_detection2 = None
 img_detection = None
 resized_image = None
+photoAsli = None
 
 def Page2():
     global img_tk
@@ -106,13 +147,15 @@ def Page2():
 
         # Menampilkan path file yang dipilih
         if file_path:
-            global imagenya, file_gbr, image_rgb
+            global imagenya, file_gbr, image_rgb,photoAsli
             print("File yang dipilih:", file_path)
-            file_gbr = file_path.replace("/", "\\")
+            file_gbr = file_path.replace("/", "/")
             # img_original = Image.open(file_path).convert("RGB")
             imagenya = cv2.imread(file_gbr)
             image_rgb = cv2.cvtColor(imagenya, cv2.COLOR_BGR2RGB)
-            asli_image = Image.fromarray(image_rgb)
+            resized_image = cv2.resize(image_rgb, (256, 256), interpolation=cv2.INTER_LINEAR)
+
+            asli_image = Image.fromarray(resized_image)
             photoAsli = ImageTk.PhotoImage(asli_image)
             
             gbrAsli_label.config(image=photoAsli)
@@ -124,15 +167,19 @@ def Page2():
     
     def show_original_image():
         # Membuat jendela baru untuk menampilkan gambar asli
+        global photoAsli
         top = Toplevel()
         top.title("Citra Ukuran Asli")
-        asli_image = Image.fromarray(image_rgb)
+        resized_image = cv2.resize(image_rgb, (256, 256), interpolation=cv2.INTER_LINEAR)
+        asli_image = Image.fromarray(resized_image)
         photoAsli = ImageTk.PhotoImage(asli_image)
         
         # Menampilkan gambar asli di jendela baru
         img_label = tk.Label(top, image=photoAsli)
         img_label.image = photoAsli  # Referensi agar gambar tidak terhapus oleh garbage collector
         img_label.pack()
+
+    
     
     def greyscale(image_rgb):
         gray = []
@@ -189,7 +236,7 @@ def Page2():
     def Process():
         
         ## kotak grayscale
-        global img_grayscale, hasil_grayscale, img_smoothing, Threshold ,hasil_threshold, img_detection2, img_detection, resized_image
+        global hasil_image, img_grayscale, hasil_grayscale, img_smoothing, Threshold ,hasil_threshold, img_detection2, img_detection, resized_image
         print(file_gbr)
         if file_gbr is None:
             print("Gambar asli belum dimuat!")
@@ -203,8 +250,9 @@ def Page2():
             else:
                 print("Gambar berhasil dimuat.")
                 print("Proses...")
+                resized_image = cv2.resize(image_rgb, (256, 256), interpolation=cv2.INTER_LINEAR)
                 ###############################################
-                hasil_grayscale = greyscale(image_rgb)
+                hasil_grayscale = greyscale(resized_image)
                 # Konversi grayscale ke format PhotoImage
                 grayscale_image = Image.fromarray(hasil_grayscale)
                 photoGray = ImageTk.PhotoImage(grayscale_image)
@@ -253,8 +301,8 @@ def Page2():
                 ################################################
                 
                 ## kotak hasil preprocessing
-                resized_image = cv2.resize(img_detection2, (256, 256), interpolation=cv2.INTER_LINEAR)
-                hasil_image = Image.fromarray(resized_image)
+                
+                hasil_image = Image.fromarray(img_detection2)
                 photoFinal = ImageTk.PhotoImage(hasil_image)
                 
                 hasilPreproc_label.config(image=photoFinal)
@@ -327,14 +375,46 @@ def Page2():
         img_label.pack()
         
     def klasifikasi():
-        
-        pass
+        global hasil_image, model,predicted_class,probability, predicted_class,probability, photoAsli
+
+        print("klasifikasi...")
+
+        class_labels = {0: 'brown_spot', 1: 'healthy'}
+
+        img_array = np.array(hasil_image)
+
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
+        img_array = np.expand_dims(img_array, axis=0)
+
+        result = model.predict(img_array)
+        probability = result[0][0]
+        predicted_class_index = 1 if probability > 0.5 else 0
+        if predicted_class_index==0 :
+            probability=1-probability
+        print(predicted_class_index)
+        predicted_class = class_labels[predicted_class_index]
+        print(predicted_class,probability)
+
+        final_gbr.config(image=photoAsli)
+        final_gbr.image=photoAsli
+
+        canvas.create_text(
+        740,
+        520,
+        anchor="nw",
+        text="Hasil Klasifikasi \nClass : "+predicted_class+" with "+str(probability)+" probability",
+        fill="#FFF6E9",
+        font=("Inter Bold", 16 * -1)
+        )
+
+        return (predicted_class,probability)
+    
 
     canvas = Canvas(
     window,
     bg = "#FFFFFF",
     height = 750,
-    width = 950,
+    width = 1100,
     bd = 0,
     highlightthickness = 0,
     relief = "ridge"
@@ -344,7 +424,7 @@ def Page2():
     canvas.create_rectangle(
         0.0,
         0.0,
-        950.0,
+        1100.0,
         750.0,
         fill="#3B79D8",
         outline="")
@@ -503,9 +583,9 @@ def Page2():
         relief="flat"
     )
     button_4.place(
-        x=739.0,
+        x=800.0,
         y=166.0,
-        width=129.0,
+        width=140.0,
         height=39.0
     )
 
@@ -521,14 +601,14 @@ def Page2():
         relief="flat"
     )
     button_3.place(
-        x=743.0,
+        x=800.0,
         y=654.0,
         width=129.0,
         height=39.0
     )
 
     canvas.create_text(
-        684.0,
+        750.0,
         57.0,
         anchor="nw",
         text="Hasil Klasifikasi\ndengan CNN",
@@ -537,13 +617,24 @@ def Page2():
         font=("Inter Bold", 32 * -1)
     )
     # Teks
-    canvas.create_rectangle(
-        711.0,
-        260.0,
-        905.0,
-        407.0,
-        fill="#FFFFFF",
-        outline="")
+    final_gbr = Label(window, text="Citra")
+    final_gbr.pack(pady=10)
+    final_gbr.place(x=740, y=260, width=256, height=256)
+    
+    # canvas.create_text(
+    #     730.0,
+    #     520.0,
+    #     anchor="nw",
+    #     text=predicted_class+" with "+probability+" probability",
+    #     fill="#FFFFFF",
+    #     justify="center",
+    #     font=("Inter Bold", 32 * -1)
+    # )
+
+    # labelhasil = Label(window, text="Klik untuk melihat \n citra")
+    # labelhasil.pack(pady=10)
+    # labelhasil.place(x=711, y=520, width=256, height=256)
+
     window.resizable(False, False)
     window.mainloop()
     
