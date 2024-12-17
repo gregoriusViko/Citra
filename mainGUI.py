@@ -366,7 +366,7 @@ def Page2():
         # Membuat jendela baru untuk menampilkan gambar asli
         top = Toplevel()
         top.title("Hasil Preprocessing")
-        hasil_image = Image.fromarray(resized_image)
+        hasil_image = Image.fromarray(img_detection2)
         photoFinal = ImageTk.PhotoImage(hasil_image)
         
         # Menampilkan gambar asli di jendela baru
